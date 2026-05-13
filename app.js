@@ -31,6 +31,8 @@ const initialState = {
   prepChoices: [],
   interviewRound: 0,
   interviewAnswers: [],
+  interviewPending: false,
+  pendingInterviewAnswer: "",
   offerResult: null,
   cozeLastError: "",
 };
@@ -591,6 +593,7 @@ function safeSet(key, value) {
 }
 
 function normalizeState(nextState) {
+  nextState = { ...nextState, interviewPending: false, pendingInterviewAnswer: "" };
   const needsJob = ["quiz", "ability", "prep", "prepReview", "interview", "offer", "seekerReport"];
   if (needsJob.includes(nextState.screen) && !nextState.selectedJobId) {
     return { ...nextState, screen: nextState.profile?.nickname ? "jobs" : "profile" };
@@ -1320,6 +1323,7 @@ function renderInterview() {
   const round = state.interviewRound;
   const done = round >= 5;
   const currentQuestion = job?.questions[round];
+  const pending = Boolean(state.interviewPending);
   return appFrame(`
     <section class="content">
       ${chapterBanner("第 6 章", "AI 面试 Boss 战", "用文字回答完成 5 轮结构化面试，系统会根据回答质量结算分数。")}
@@ -1342,13 +1346,21 @@ function renderInterview() {
                 `,
               )
               .join("")}
-            ${done ? `<div class="message system">5 轮面试已结束。系统将根据测评、求职准备和面试表现计算 Offer 结果。</div>` : `<div class="message ai">${currentQuestion}</div>`}
+            ${
+              done
+                ? `<div class="message system">5 轮面试已结束。系统将根据测评、求职准备和面试表现计算 Offer 结果。</div>`
+                : `<div class="message ai">${currentQuestion}</div>${
+                    pending
+                      ? `<div class="message user">${escapeHtml(state.pendingInterviewAnswer)}</div><div class="message system loading-message"><span class="loading-spinner"></span>AI 面试官正在分析你的回答，请稍等...</div>`
+                      : ""
+                  }`
+            }
           </div>
           <div class="chat-input">
             ${
               done
                 ? `<button class="btn primary" data-action="finishInterview">查看 Offer 结果</button>`
-                : `<div class="field"><textarea id="interview-answer" placeholder="请输入你的回答，建议包含背景、行动和结果。"></textarea></div><div class="voice-row"><button class="btn ghost" id="voice-btn" data-action="voiceInterview" type="button">开始语音输入</button><button class="btn primary" data-action="submitInterview">提交回答</button><span class="voice-status" id="voice-status">未录音</span></div><p class="small-note">语音输入依赖浏览器支持。点击开始后说话，再点击结束录音。</p>`
+                : `<div class="field"><textarea id="interview-answer" placeholder="请输入你的回答，建议包含背景、行动和结果。" ${pending ? "disabled" : ""}>${pending ? escapeHtml(state.pendingInterviewAnswer) : ""}</textarea></div><div class="voice-row"><button class="btn ghost" id="voice-btn" data-action="voiceInterview" type="button" ${pending ? "disabled" : ""}>开始语音输入</button><button class="btn primary" data-action="submitInterview" ${pending ? "disabled" : ""}>${pending ? `<span class="btn-spinner"></span>等待反馈` : "提交回答"}</button><span class="voice-status" id="voice-status">${pending ? "AI 分析中" : "未录音"}</span></div><p class="small-note">${pending ? "正在调用 AI 面试官，请不要重复提交。" : "语音输入依赖浏览器支持。点击开始后说话，再点击结束录音。"}</p>`
             }
           </div>
         </div>
@@ -1764,14 +1776,21 @@ async function handleClick(event) {
     return render();
   }
   if (action === "submitInterview") {
+    if (state.interviewPending) return;
     const answer = document.querySelector("#interview-answer")?.value.trim();
     if (!answer || answer.length < 8) {
       alert("回答至少输入 8 个字，方便系统评分。");
       return;
     }
-    const detail = interviewScoreDetail(answer, state.interviewRound);
-    const localFeedback = interviewFeedback(answer, state.interviewRound, detail.score);
-    const agentResult = await getAgentInterviewFeedback(answer, state.interviewRound, detail);
+    const roundAtSubmit = state.interviewRound;
+    state.interviewPending = true;
+    state.pendingInterviewAnswer = answer;
+    saveState();
+    render();
+
+    const detail = interviewScoreDetail(answer, roundAtSubmit);
+    const localFeedback = interviewFeedback(answer, roundAtSubmit, detail.score);
+    const agentResult = await getAgentInterviewFeedback(answer, roundAtSubmit, detail);
     const agentFeedback = agentResult.feedback;
     state.cozeLastError = agentResult.error || "";
     state.interviewAnswers.push({
@@ -1783,11 +1802,14 @@ async function handleClick(event) {
       feedbackSource: agentFeedback ? "Coze Agent" : "本地模拟",
       feedbackError: agentFeedback ? "" : state.cozeLastError,
     });
-    state.interviewRound += 1;
+    state.interviewRound = roundAtSubmit + 1;
+    state.interviewPending = false;
+    state.pendingInterviewAnswer = "";
     saveState();
     return render();
   }
   if (action === "voiceInterview") {
+    if (state.interviewPending) return;
     return toggleSpeechInput("interview-answer");
   }
   if (action === "goInterview") return setScreen("interview");
