@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/interview",
+      "destination": "/api/interview.js"
+    }
+  ]
+}
