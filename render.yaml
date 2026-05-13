@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: career-survival-simulator
+    env: python
+    plan: free
+    buildCommand: ""
+    startCommand: "python server.py"
+    envVars:
+      - key: COZE_BOT_ID
+        value: "7638871061970927662"
+      - key: COZE_API_TOKEN
+        sync: false
