@@ -1024,7 +1024,6 @@ function updateHistory() {
     safeSet("career-sim-best", JSON.stringify({ score: result.total, job: getJob()?.name, level: result.level }));
   }
 }
-
 function appFrame(content) {
   const activeIndex = Math.max(0, STAGES.findIndex(([key]) => key === state.screen));
   const showHud = !["home"].includes(state.screen);
@@ -1034,7 +1033,7 @@ function appFrame(content) {
         <div class="brand">
           <div class="brand-mark">AI</div>
           <div>
-            <h1 class="brand-title">职场生存模拟器</h1>
+            <h1 class="brand-title">AI面试模拟器</h1>
             <p class="brand-subtitle">AI 求职训练与职业成长模拟游戏</p>
           </div>
         </div>

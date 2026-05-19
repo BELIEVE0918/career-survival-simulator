@@ -89,7 +89,7 @@ async function handleInterview(req, res) {
 
 function buildInterviewPrompt(payload) {
   return `
-你是《职场生存模拟器》的 AI 面试官。请只围绕大学生求职面试给反馈，不闲聊，不决定录用结果，不改变游戏流程。
+你是《AI面试模拟器》的 AI 面试官。请只围绕大学生求职面试给反馈，不闲聊，不决定录用结果，不改变游戏流程。
 
 目标岗位：${payload.jobName}
 当前轮次：${payload.roundName}

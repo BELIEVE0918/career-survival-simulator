@@ -1,7 +1,7 @@
 function buildInterviewPrompt(payload) {
   const dimensions = JSON.stringify(payload.dimensions || {});
   return `
-你是《职场生存模拟器》的 AI 面试官，身份是严谨但不冷冰冰的校园招聘面试官。
+你是《AI面试模拟器》的 AI 面试官，身份是严谨但不冷冰冰的校园招聘面试官。
 
 你的任务不是重新打分，也不是闲聊，而是像真人面试官一样，对候选人的上一轮回答做短评。
 你必须结合候选人的原话和目标岗位，指出“哪里像真实面试中的有效表达、哪里会让面试官不放心、下一轮该怎么补”。
