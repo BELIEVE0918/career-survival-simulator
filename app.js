@@ -984,7 +984,7 @@ function calculateOffer() {
   const total = clamp(abilityScore * 0.3 + prepScore * 0.25 + interviewScore * 0.35 + jobFit * 0.1);
   let level = "暂不通过";
   let type = "danger";
-  let advice = "当前准备度不足，建议先复盘岗位匹配、简历证据和面试表达，再重新挑战。";
+  let advice = "当前准备度不足，建议先复盘岗位匹配、简历证据和面试表达，再重新训练。";
   if (total >= 85) {
     level = "强烈推荐录用";
     type = "success";
@@ -1013,7 +1013,7 @@ function updateHistory() {
   const history = JSON.parse(safeGet("career-sim-history") || "[]");
   history.unshift({
     date: new Date().toLocaleString("zh-CN"),
-    name: state.profile.nickname || "匿名玩家",
+    name: state.profile.nickname || "匿名用户",
     job: getJob()?.name,
     score: result.total,
     level: result.level,
@@ -1034,7 +1034,7 @@ function appFrame(content) {
           <div class="brand-mark">AI</div>
           <div>
             <h1 class="brand-title">AI面试模拟器</h1>
-            <p class="brand-subtitle">AI 求职训练与职业成长模拟游戏</p>
+            <p class="brand-subtitle">AI 面试训练与职业能力评估系统</p>
           </div>
         </div>
         <button class="btn ghost" data-action="reset">重新开始</button>
@@ -1056,7 +1056,7 @@ function gameHud() {
       <div class="hud-player">
         <div class="avatar">${(state.profile.nickname || "玩").slice(0, 1)}</div>
         <div>
-          <strong>${state.profile.nickname || "未命名玩家"}</strong>
+          <strong>${state.profile.nickname || "未命名用户"}</strong>
           <span>${state.profile.stage || "待设定"} · ${state.profile.major || "未选择专业"}</span>
         </div>
       </div>
@@ -1075,19 +1075,19 @@ function renderHome() {
     <section class="hero">
       <div class="hero-main">
         <p class="eyebrow">基于 AI Agent 的大学生职业能力训练模拟系统</p>
-        <h1>开启一局从投递到 Offer 的职场生存战役。</h1>
-        <p class="hero-copy">你将扮演一名即将求职的大学生，先设定角色和目标岗位，再通过测评生成岗位适配画像，经历求职事件、AI 面试和 Offer 判定，最终得到一份完整的职业成长报告。</p>
+        <h1>开启你的 AI 面试训练之旅</h1>
+        <p class="hero-copy">选择目标岗位，完成岗位适配测评与求职准备，进入 AI 模拟面试，最终生成一份可复盘的职业成长报告。</p>
         <div class="cta-row">
-          <button class="btn primary" data-action="start">开始完整训练</button>
+          <button class="btn primary" data-action="start">开始模拟面试</button>
           ${state.screen !== "home" ? `<button class="btn ghost" data-action="continue">继续上次进度</button>` : ""}
         </div>
       </div>
       <aside class="hero-visual">
         <div class="mock-terminal">
-          <div class="terminal-line"><span>游戏章节</span><strong>8 个关卡</strong></div>
+          <div class="terminal-line"><span>训练流程</span><strong>8 个环节</strong></div>
           <div class="terminal-line"><span>岗位适配</span><strong>30 道题</strong></div>
           <div class="terminal-line"><span>目标岗位</span><strong>${jobs.length} 个方向</strong></div>
-          <div class="terminal-line"><span>Boss 关卡</span><strong>5 轮面试</strong></div>
+          <div class="terminal-line"><span>AI 面试</span><strong>5 轮问答</strong></div>
           <div class="terminal-line"><span>最终输出</span><strong>成长报告</strong></div>
           <div class="terminal-line"><span>历史最好</span><strong class="terminal-score">${best ? best.level : "暂无"}</strong></div>
         </div>
@@ -1107,11 +1107,11 @@ function renderHome() {
 function renderProfile() {
   return appFrame(`
     <section class="content">
-      ${chapterBanner("第 1 章", "创建你的求职角色", "先确定身份、专业和目标城市，本局所有报告都会记录这张角色卡。")}
+      ${chapterBanner("第 1 章", "创建你的求职档案", "先确定身份、专业和目标城市，本次训练的报告都会记录这份档案。")}
       <div class="page-head">
         <div>
           <h2>角色创建</h2>
-          <p>先设定玩家身份，后续测评、岗位选择和成长报告都会围绕这份档案展开。</p>
+          <p>先填写基础求职信息，后续测评、岗位选择和成长报告都会围绕这份档案展开。</p>
         </div>
       </div>
       <form id="profile-form" class="grid two">
@@ -1123,7 +1123,7 @@ function renderProfile() {
         ${selectField("status", "求职状态", ["刚开始准备", "已经投递", "收到面试", "多次受挫", "冲刺 Offer"])}
       </form>
       <div class="footer-actions">
-        <button class="btn primary" data-action="saveProfile">创建角色并选择目标岗位</button>
+        <button class="btn primary" data-action="saveProfile">创建档案并选择目标岗位</button>
       </div>
     </section>
   `);
@@ -1148,7 +1148,7 @@ function renderQuiz() {
   const progress = Math.round(((state.quizIndex + 1) / activeQuestions.length) * 100);
   return appFrame(`
     <section class="content">
-      ${chapterBanner("第 3 章", "岗位适配测试", "30 道题会初始化你的六项能力，决定本局求职起点。")}
+      ${chapterBanner("第 3 章", "岗位适配测试", "30 道题会生成你的六项能力画像，确定本次训练起点。")}
       <div class="question-layout">
         <div>
           <div class="page-head">
@@ -1178,7 +1178,7 @@ function renderQuiz() {
           <h3>测试进度</h3>
           <div class="meter" style="--value: ${progress}%"><span></span></div>
           <p class="muted">已完成 ${state.answers.filter((item) => item !== undefined).length} 道题。前 20 题建立基础画像，后 10 题围绕「${getJob()?.name}」判断岗位适配。</p>
-          <p class="small-note">这是角色进入求职战役前的初始化阶段，数值会影响后续事件和面试结果。</p>
+          <p class="small-note">这是正式面试训练前的画像生成阶段，数值会影响后续准备建议和面试结果。</p>
         </aside>
       </div>
     </section>
@@ -1197,7 +1197,7 @@ function renderAbility() {
           <h2>岗位适配画像</h2>
           <p>系统根据目标岗位和 30 道测评题生成你的岗位适配画像，帮助你判断当前优势和后续训练重点。</p>
         </div>
-        <button class="btn primary" data-action="goPrep">进入求职准备关卡</button>
+        <button class="btn primary" data-action="goPrep">进入求职准备</button>
       </div>
       <div class="report-grid">
         <div class="card">
@@ -1220,11 +1220,11 @@ function renderAbility() {
 function renderJobs() {
   return appFrame(`
     <section class="content">
-      ${chapterBanner("第 2 章", "选择本局挑战岗位", "先选目标，再测适配。这样后续每一步都有明确方向。")}
+      ${chapterBanner("第 2 章", "选择目标岗位", "先选目标，再测适配。这样后续每一步都有明确方向。")}
       <div class="page-head">
         <div>
-          <h2>选择本局目标岗位</h2>
-          <p>先决定你要挑战的岗位。后续测评、剧情、面试问题和评分标准都会围绕这个目标展开。</p>
+          <h2>选择目标岗位</h2>
+          <p>先决定你的目标岗位。后续测评、求职准备、面试问题和评分标准都会围绕这个目标展开。</p>
         </div>
       </div>
       <div class="grid three">
@@ -1253,12 +1253,12 @@ function renderPrep() {
   const selected = state.prepChoices[state.prepIndex];
   return appFrame(`
     <section class="content">
-      ${chapterBanner("第 5 章", "求职准备关卡", "完成五个关键求职选择，系统会在结束后统一复盘你的路线影响。")}
+      ${chapterBanner("第 5 章", "求职准备", "完成五个关键求职选择，系统会在结束后统一复盘你的路线影响。")}
       <div class="question-layout">
         <div>
           <div class="page-head">
             <div>
-          <h2>求职准备关卡</h2>
+          <h2>求职准备</h2>
           <p>${event.title} · 第 ${state.prepIndex + 1} / ${prepEvents.length} 个事件</p>
             </div>
           </div>
@@ -1325,10 +1325,10 @@ function renderInterview() {
   const pending = Boolean(state.interviewPending);
   return appFrame(`
     <section class="content">
-      ${chapterBanner("第 6 章", "AI 面试 Boss 战", "用文字回答完成 5 轮结构化面试，系统会根据回答质量结算分数。")}
+      ${chapterBanner("第 6 章", "AI 模拟面试", "完成 5 轮结构化面试，系统会根据回答质量生成评价。")}
       <div class="page-head">
         <div>
-          <h2>Boss 关卡：AI 面试官</h2>
+          <h2>模拟面试：AI 面试官</h2>
           <p>${job?.name} 结构化面试 · ${done ? "已完成" : `第 ${round + 1} / 5 轮`}</p>
         </div>
       </div>
@@ -1386,10 +1386,10 @@ function renderOffer() {
   saveState();
   return appFrame(`
     <section class="content">
-      ${chapterBanner("第 7 章", "Offer 结算", "系统根据测评、求职选择、面试表现和岗位匹配度给出本局结果。")}
+      ${chapterBanner("第 7 章", "Offer 结果判定", "系统根据测评、求职选择、面试表现和岗位匹配度给出本次训练结果。")}
       <div class="result-banner ${result.type}">
         <div>
-          <h2>关卡结算：Offer 结果判定</h2>
+          <h2>结果判定：Offer 建议</h2>
           <p>系统不会只看一个分数，而是结合基础画像、求职策略、面试表达和岗位适配给出录用建议。</p>
         </div>
         <div class="result-score">
@@ -1422,7 +1422,7 @@ function renderSeekerReport() {
       <div class="page-head">
         <div>
           <h2>职业成长报告</h2>
-          <p>${state.profile.nickname || "玩家"} · ${getJob()?.name} · ${new Date().toLocaleDateString("zh-CN")}</p>
+          <p>${state.profile.nickname || "用户"} · ${getJob()?.name} · ${new Date().toLocaleDateString("zh-CN")}</p>
         </div>
         <div class="score-big">${scoreLabel(result.total)}</div>
       </div>
@@ -1465,7 +1465,7 @@ function renderSeekerReport() {
       <div class="footer-actions">
         <button class="btn ghost" data-action="print">打印 / 导出 PDF</button>
         <button class="btn ghost" data-action="copyReport">复制报告摘要</button>
-        <button class="btn danger" data-action="reset">重新挑战</button>
+        <button class="btn danger" data-action="reset">重新训练</button>
       </div>
     </section>
   `);
@@ -1628,7 +1628,7 @@ function escapeHtml(value) {
 
 function copyReportText() {
   const result = state.offerResult || calculateOffer();
-  const text = `《职业成长报告》\n姓名：${state.profile.nickname || "玩家"}\n目标岗位：${getJob()?.name}\n录用建议：${result.level}\n准备度等级：${scoreLabel(result.total)}\n核心建议：${seekerConclusion(result)}`;
+  const text = `《职业成长报告》\n姓名：${state.profile.nickname || "用户"}\n目标岗位：${getJob()?.name}\n录用建议：${result.level}\n准备度等级：${scoreLabel(result.total)}\n核心建议：${seekerConclusion(result)}`;
   navigator.clipboard?.writeText(text);
   alert("报告摘要已复制。");
 }
