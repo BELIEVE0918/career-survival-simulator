@@ -792,18 +792,35 @@ function interviewScoreDetail(answer, round) {
   const lower = answer.toLowerCase();
   const length = answer.trim().length;
   const hasStructure = /首先|其次|最后|第一|第二|第三|背景|任务|行动|结果|因为|所以|例如|比如|复盘/.test(answer);
-  const hasEvidence = /项目|实习|负责|参与|数据|指标|用户|业务|结果|提升|降低|完成|上线|复盘|\d/.test(answer);
-  const hasMindset = /学习|沟通|协作|负责|主动|调整|改进|复盘|目标|计划|压力|解决/.test(answer);
   const skillHits = (job?.skills || []).filter((skill) => lower.includes(skill.toLowerCase()) || answer.includes(skill)).length;
+  const evidenceDetail = evidenceSignals(answer, skillHits);
+  const hasEvidence = evidenceDetail.hasEvidence;
+  const hasMindset = /学习|沟通|协作|负责|主动|调整|改进|复盘|目标|计划|压力|解决/.test(answer);
   const quality = answerQualityFlags(answer, job, round, { hasEvidence, hasMindset, skillHits });
 
-  const completeness = clamp(42 + Math.min(38, Math.floor(length / 4)) + (length >= 80 ? 10 : 0));
-  const structure = clamp(46 + (hasStructure ? 34 : 8) + (answer.includes("。") || answer.includes("\n") ? 8 : 0));
-  const evidence = clamp(42 + (hasEvidence ? 28 : 6) + Math.min(18, skillHits * 6));
-  const jobFit = clamp(44 + skillHits * 10 + (answer.includes(job?.name || "") ? 8 : 0) + jobFitAbilityBonus(round, abilities));
-  const mindset = clamp(46 + (hasMindset ? 26 : 8) + mindsetAbilityBonus(round, abilities));
+  let completeness = clamp(42 + Math.min(38, Math.floor(length / 4)) + (length >= 80 ? 10 : 0));
+  let structure = clamp(46 + (hasStructure ? 34 : 8) + (answer.includes("。") || answer.includes("\n") ? 8 : 0));
+  let evidence = evidenceDetail.score;
+  let jobFit = clamp(44 + skillHits * 10 + (answer.includes(job?.name || "") ? 8 : 0) + jobFitAbilityBonus(round, abilities));
+  let mindset = clamp(46 + (hasMindset ? 26 : 8) + mindsetAbilityBonus(round, abilities));
 
   const rubric = interviewRubric(round);
+  if (quality.invalid) {
+    completeness = Math.min(completeness, 32);
+    structure = Math.min(structure, 32);
+    evidence = Math.min(evidence, 28);
+    jobFit = Math.min(jobFit, 30);
+    mindset = Math.min(mindset, 42);
+  } else if (quality.offTopic) {
+    completeness = Math.min(completeness, 48);
+    structure = Math.min(structure, 48);
+    evidence = Math.min(evidence, 42);
+    jobFit = Math.min(jobFit, 42);
+    mindset = Math.min(mindset, 52);
+  } else if (!hasEvidence) {
+    evidence = Math.min(evidence, 48);
+  }
+
   let score = clamp(
     completeness * rubric.weights.completeness +
       structure * rubric.weights.structure +
@@ -828,6 +845,34 @@ function interviewScoreDetail(answer, round) {
       jobFit,
       mindset,
     },
+  };
+}
+
+function evidenceSignals(answer, skillHits = 0) {
+  const trimmed = answer.trim();
+  const compact = trimmed.replace(/\s/g, "");
+  const hasExperienceScene =
+    /项目|实习|课程设计|毕设|竞赛|社团|实验|实践|兼职|经历|案例|需求|接口|系统|模块|数据库|页面|后端|前端|运营|活动|用户调研|数据分析|测试|招聘|简历/.test(trimmed);
+  const hasAction = /负责|参与|主导|完成|实现|设计|开发|优化|上线|维护|分析|整理|推进|协作|复盘|解决|跟进|搭建|撰写|调研/.test(trimmed);
+  const hasResult = /结果|提升|降低|增长|减少|完成|上线|通过|获得|产出|指标|效率|转化|留存|准确率|响应|性能|bug|问题|反馈|排名|获奖/.test(trimmed);
+  const hasConcreteNumber = /(\d+%|\d+人|\d+次|\d+天|\d+周|\d+个月|\d+年|\d+分|\d+条|\d+个|\d+份|\d+小时|\d+页|\d+\.\d+)/.test(trimmed);
+  const hasSelfContext = /我|本人|自己|曾经|期间|在.+中|作为/.test(trimmed);
+  const repeatedChars = /(.)\1{5,}/.test(compact);
+  const mostlyDigits = compact.length > 0 && compact.replace(/\d/g, "").length / compact.length < 0.35;
+
+  let score = 28;
+  if (hasExperienceScene) score += 18;
+  if (hasAction) score += 16;
+  if (hasResult) score += 14;
+  if (hasConcreteNumber) score += 10;
+  if (hasSelfContext) score += 6;
+  score += Math.min(8, skillHits * 4);
+
+  const signalCount = [hasExperienceScene, hasAction, hasResult, hasConcreteNumber, hasSelfContext, skillHits > 0].filter(Boolean).length;
+  const hasEvidence = !repeatedChars && !mostlyDigits && signalCount >= 3 && hasExperienceScene && hasAction;
+  return {
+    hasEvidence,
+    score: clamp(hasEvidence ? score : Math.min(score, 52)),
   };
 }
 
@@ -1341,7 +1386,7 @@ function renderInterview() {
                 (item, idx) => `
                   <div class="message ai">${job.questions[idx]}</div>
                   <div class="message user">${escapeHtml(item.answer)}</div>
-                  <div class="message system">本轮评价：${scoreLabel(item.score)}。${item.feedback}<div class="source-note">反馈来源：${item.feedbackSource || "本地模拟"}${item.feedbackError ? ` · ${item.feedbackError}` : ""}</div>${interviewDimensionHtml(item)}</div>
+                  <div class="message system">本轮评价：${scoreLabel(item.score)}。${item.feedback}<div class="source-note">反馈来源：${item.feedbackSource || "本地模拟"}${item.feedbackError ? ` · ${item.feedbackError}` : ""}</div>${interviewDimensionHtml(item, idx)}</div>
                 `,
               )
               .join("")}
@@ -1543,8 +1588,10 @@ function scoreBreakdown(result) {
   );
 }
 
-function interviewDimensionHtml(item) {
-  if (!item.dimensions) return "";
+function interviewDimensionHtml(item, round) {
+  const recalculated = typeof round === "number" && item.answer ? interviewScoreDetail(item.answer, round).dimensions : null;
+  const dimensions = recalculated || item.dimensions;
+  if (!dimensions) return "";
   const labels = {
     completeness: "回答完整",
     structure: "表达结构",
@@ -1552,7 +1599,7 @@ function interviewDimensionHtml(item) {
     jobFit: "岗位贴合",
     mindset: "应对心态",
   };
-  return `<div class="mini-scores">${Object.entries(item.dimensions)
+  return `<div class="mini-scores">${Object.entries(dimensions)
     .map(([key, value]) => `<span>${labels[key]}：${scoreLabel(value)}</span>`)
     .join("")}</div>`;
 }
@@ -1596,7 +1643,7 @@ function abilityBiasSummary(abilities) {
 
 function interviewSummary() {
   return state.interviewAnswers
-    .map((item, idx) => `<div class="timeline-item"><strong>第 ${idx + 1} 轮 ${item.rubric || "面试"}：${scoreLabel(item.score)}</strong><p>${item.feedback}</p>${interviewDimensionHtml(item)}</div>`)
+    .map((item, idx) => `<div class="timeline-item"><strong>第 ${idx + 1} 轮 ${item.rubric || "面试"}：${scoreLabel(item.score)}</strong><p>${item.feedback}</p>${interviewDimensionHtml(item, idx)}</div>`)
     .join("");
 }
 
